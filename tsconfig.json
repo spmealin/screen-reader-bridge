@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "declaration": true,
+        "declarationDir": "./types",
+        "outDir": "./dist/",
+        "removeComments": true,
+        "target": "ES2020",
+        "preserveConstEnums": true,
+        "moduleResolution": "Node",
+        "types": ["node"]
+    },
+    "include": ["src/**/*"],
+    "exclude": ["test/**/*"]
+}
