@@ -15,6 +15,7 @@ export class ScreenReaderBridge {
     private readonly _maxNumPaddingCharacters = 3;
     private _numPaddingCharacters = 0;
     private _lastCreatedElement: HTMLElement | null;
+    private _childElementType: string;
 
     /**
      * Add the required aria attributes to an element for screen readers to properly work.
@@ -24,11 +25,10 @@ export class ScreenReaderBridge {
      * roll: status
      * aria-atomic: true
      * aria-relevant: additions text
-     *   For the aria-live attribute, "polite" may also work, but that will create a queue of messages for the screen
-     *   reader to read out one after another which is probably not what you want.
-     *
+     * For the aria-live attribute, "polite" may also work, but that will create a queue of messages for the screen
+     * reader to read out one after another which is probably not what you want.
      * @param element - the "caption" element which will host the messages for the screen reader to speak
-     * @param [ariaLive="assertive"] - the politeness of the aria-live attribute, one of "off", "assertive", or "polite"
+     * @param [ariaLive] - the politeness of the aria-live attribute, one of "off", "assertive", or "polite"
      * @static
      */
     public static addAriaAttributes(
@@ -43,12 +43,18 @@ export class ScreenReaderBridge {
 
     /**
      * Create a ScreenReaderBridge instance.
-     *
+     * The childElementType parameter allows you to set the type of children that will be created when messages are rendered for the screen reader to speak.
+     * By default, it creates div elements, but you can switch it to span elements if you really need to.
      * @param captionElement - the "caption" element, typically a span or div element
+     * @param childElementType - the type of element that will be used, either "div" or "span", defaults to "div"
      */
-    public constructor(captionElement: HTMLElement) {
+    public constructor(
+        captionElement: HTMLElement,
+        childElementType: "div" | "span" = "div"
+    ) {
         this._element = captionElement;
         this._lastCreatedElement = null;
+        this._childElementType = childElementType;
     }
 
     /**
@@ -67,34 +73,32 @@ export class ScreenReaderBridge {
 
     /**
      * Speak the provided text.
-     *
      * @param text - the text to speak
      */
     public render(text: string): void {
         // Pad the text with the padding character.
         const paddedText = this._creatPaddedText(text);
         // Create the new element.
-        const divElement = document.createElement("div");
-        divElement.textContent = paddedText;
-        divElement.setAttribute(
+        const childElement = document.createElement(this._childElementType);
+        childElement.textContent = paddedText;
+        childElement.setAttribute(
             ScreenReaderBridge.ORIGINAL_TEXT_ATTRIBUTE,
             text
         );
-        divElement.setAttribute("data-created", Date.now().toString());
+        childElement.setAttribute("data-created", Date.now().toString());
         // If there is a previous element, delete old elements and add it to the list to be deleted in the future.
         if (this.lastCreatedElement) {
             this._removeOldElements();
             this.lastCreatedElement.style.display = "none";
         }
         // Show the new element wit the text.
-        this._element.appendChild(divElement);
-        this._lastCreatedElement = divElement;
+        this._element.appendChild(childElement);
+        this._lastCreatedElement = childElement;
     }
 
     /**
      * Pad the provided text with the padding character.
      * Padding the text tricks screen readers into speaking it, even if they think it should be suppressed.
-     *
      * @param text - the text to pad
      * @private
      */
@@ -113,7 +117,6 @@ export class ScreenReaderBridge {
      * Remove any hidden elements that were hidden longer than the set milliseconds.
      * We wait to remove those elements even though they are hidden because some screen readers don't like the DOM
      * changing that much.
-     *
      * @private
      */
     private _removeOldElements(): void {
