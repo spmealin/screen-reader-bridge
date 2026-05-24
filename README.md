@@ -1,96 +1,193 @@
 # ScreenReaderBridge
-A simple interface for making a variety of screen reader and browser combinations speak using an ARIA live region.
 
-## Description
+ScreenReaderBridge is a small TypeScript library for announcing text through an
+ARIA live region. It is useful when an app needs a screen reader to read status
+messages, validation updates, or other short captions without using generated
+audio, the Web Audio API, or the Web Speech API.
 
-This package contains a single TypeScript class which handles manipulating an ARIA live region so that screen reading software will read out the text when desired. It will work with a number of different screen readers, screen reader versions, and browsers. The class includes a static method which will automatically configure the correct ARIA tags so things work as they should.
+The end user must have a screen reader such as NVDA, JAWS, VoiceOver, or TalkBack
+running to hear the announcements.
 
-This does not create audio to play using the WebAudioAPI, nor does it use the WebSpeechAPI. The end-user must have a screen reader (e.g. Jaws, NVDA, VoiceOver, etc.) running to hear any output.
+## Install
 
-## Useage
-
-```js
-// Create or get a "div" element which will be used as the region.
-let divElement = document.getElementById("MyDiv");
-// Apply the ARIA attributes automatically.
-ScreenReaderBridge.addAriaAttributes(divElement);
-// Create the ScreenReaderBridge object.
-let srb = new ScreenReaderBridge(divElement);
-// Call srb.render to have screen readers speak the text.
-srb.render("Hello, World!");
+```bash
+npm install screen-reader-bridge
 ```
 
-## API notes
+## Usage
 
-Here is a list of attributes and methods available on the ScreenReaderBridge object in TypeScript notation.
+Create or choose an element that will host the live region, apply the ARIA
+attributes, then render messages into it.
 
 ```ts
-/**
- * A class that will handle passing text to screen readers to speak.
- * When a user of this class passes in a "caption" element, the renderer will add a child element to the caption for
- * each string that the screen reader should speak. The renderer will also remove old child nodes when a new string is
- * spoken.
- * The "caption" element must have a specific list of aria attributes to properly work, see the static method
- * "addAriaAttributes" for more details.
-*/
-declare class ScreenReaderBridge {
+import { ScreenReaderBridge } from "screen-reader-bridge";
 
-    /**
-     * Automatically add the required aria attributes to an element for screen readers to properly work.
-     * In order for the greatest number of screen reader and browser combinations to work, the following attributes will
-     * be set on the element:
-     * aria-live: assertive
-     * roll: status
-     * aria-atomic: true
-     * aria-relevant: additions text
-     *   For the aria-live attribute, "polite" may also work, but that will create a queue of messages for the screen
-     *   reader to read out one after another which is probably not what you want.
-     *
-     * @param element - the "caption" element which will host the messages for the screen reader to speak
-     * @param [ariaLive="assertive"] - the politeness of the aria-live attribute, one of "off", "assertive", or "polite"
-     * @static
-    */
-    static addAriaAttributes(element: HTMLElement, ariaLive?: string): void;
+const captionElement = document.getElementById("screen-reader-caption");
 
-    /**
-     * Create a ScreenReaderBridge instance.
-     *
-     * @param captionElement - the "caption" element, typically a span or div element
-    */
-    constructor(captionElement: HTMLElement);
-
-    /**
-     * The last created child element of the "caption" element.
-     * This is typically used for debugging and automated testing.
-    */
-    get lastCreatedElement(): HTMLElement | null;
-
-    /**
-     * Clear the contents of the live region.
-     * You normally do not have to call this yourself since calls to the render method will automatically clean up old text.
-    */
-    clear(): void;
-
-    /**
-     * Speak the provided text.
-     *
-     * @param text - the text to speak
-    */
-    render(text: string): void;
+if (captionElement) {
+    const bridge = new ScreenReaderBridge(captionElement, {
+        configureElement: true
+    });
+    bridge.render("Saved successfully.");
 }
 ```
 
-## Contributing and building from source
+Default imports are also supported:
 
-Download/clone this repository. To install needed packages and build, run the following:
+```ts
+import ScreenReaderBridge from "screen-reader-bridge";
+```
+
+The live region element must be present in the DOM. If you visually hide it,
+use an off-screen CSS pattern rather than `display: none`, `visibility: hidden`,
+or `aria-hidden="true"`, because hidden elements are not announced by screen
+readers.
+
+```html
+<div id="screen-reader-caption" class="sr-only"></div>
+```
+
+```css
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+```
+
+### CommonJS
+
+```js
+const { ScreenReaderBridge } = require("screen-reader-bridge");
+```
+
+### Browser Script
+
+A browser-global build is published for CDN or direct script use. It exposes the
+class as `window.ScreenReaderBridge`.
+
+```html
+<script src="https://unpkg.com/screen-reader-bridge/dist/index.global.js"></script>
+<script>
+    const captionElement = document.getElementById("screen-reader-caption");
+    ScreenReaderBridge.addAriaAttributes(captionElement);
+
+    const bridge = new ScreenReaderBridge(captionElement);
+    bridge.render("Loaded.");
+</script>
+```
+
+## API
+
+### `ScreenReaderBridge.addAriaAttributes(element, politenessLevel?)`
+
+Adds the ARIA attributes needed for a status live region:
+
+- `aria-live`: defaults to `assertive`
+- `role`: `status`
+- `aria-atomic`: `true`
+- `aria-relevant`: `additions text`
+
+`politenessLevel` is typed as `ScreenReaderBridgePolitenessLevel` and can be
+`"off"`, `"polite"`, or `"assertive"`. The default is `"assertive"` because
+most consumers use this package for messages that should be announced
+immediately. Use `"polite"` when messages should wait behind other screen reader
+output, but this is almost always not what you want.
+
+### `new ScreenReaderBridge(captionElement, options?)`
+
+Creates a bridge that writes messages into `captionElement`.
+
+For backwards compatibility, `options` can be a
+`ScreenReaderBridgeChildElementType` string:
+
+```ts
+const bridge = new ScreenReaderBridge(captionElement, "span");
+```
+
+For new code, prefer a `ScreenReaderBridgeOptions` object:
+
+```ts
+const bridge = new ScreenReaderBridge(captionElement, {
+    childElementType: "span",
+    configureElement: true,
+    politenessLevel: "assertive"
+});
+```
+
+`childElementType` defaults to `"div"` and can also be `"span"` when inline
+children are preferred. `configureElement` defaults to `false`; when it is
+`true`, the constructor calls `ScreenReaderBridge.addAriaAttributes()` for the
+caption element. `politenessLevel` is used only when `configureElement` is
+`true`.
+
+### `bridge.render(text)`
+
+Adds `text` to the live region so screen readers announce it. Repeated messages
+are padded internally with non-breaking spaces so screen readers treat them as
+changed text.
+
+Old message nodes are hidden first and removed after a short delay. This reduces
+DOM churn in the live region while keeping the newest announcement available.
+
+### `bridge.clear()`
+
+Removes all rendered message nodes from the live region and resets
+`lastCreatedElement` to `null`.
+
+### `bridge.lastCreatedElement`
+
+Returns the most recent message element, or `null` before the first call to
+`render`. This is mainly useful for testing and debugging.
+
+### Exported Types
+
+```ts
+import type {
+    ScreenReaderBridgeChildElementType,
+    ScreenReaderBridgeOptions,
+    ScreenReaderBridgePolitenessLevel
+} from "screen-reader-bridge";
+
+const politenessLevel: ScreenReaderBridgePolitenessLevel = "assertive";
+const childElementType: ScreenReaderBridgeChildElementType = "span";
+const options: ScreenReaderBridgeOptions = {
+    childElementType,
+    configureElement: true,
+    politenessLevel
+};
+```
+
+## Package Formats
+
+The package exposes:
+
+- ESM through `exports.import` and `module`
+- CommonJS through `exports.require` and `main`
+- TypeScript declarations through `exports.types` and `types`
+- Browser-global output through `unpkg`, `jsdelivr`, and
+  `dist/index.global.js`
+
+## Development
+
 ```bash
 npm install
+npm test
 npm run build
 ```
 
-When you want to clean your workspace, run the following:
+Other useful commands:
+
 ```bash
+npm run lint-check
 npm run clean
 ```
 
-Contributions and bug reports are very welcome via pull requests and opening issues.
+Contributions and bug reports are welcome through pull requests and GitHub
+issues.
