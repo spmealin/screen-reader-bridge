@@ -1,6 +1,6 @@
 {
     "name": "screen-reader-bridge",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "A simple interface for making a variety of screen reader and browser combinations speak using an ARIA live region.",
     "type": "module",
     "main": "./dist/index.cjs",
