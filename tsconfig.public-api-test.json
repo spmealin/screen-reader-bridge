@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "lib": ["DOM", "ES2020"],
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "noEmit": true,
+        "baseUrl": ".",
+        "paths": {
+            "screen-reader-bridge": ["dist/index.d.ts"]
+        },
+        "strict": true,
+        "target": "ES2020",
+        "types": []
+    },
+    "include": ["test/public-api.test-d.ts"]
+}

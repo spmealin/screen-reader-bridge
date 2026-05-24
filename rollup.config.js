@@ -6,28 +6,46 @@ import del from "rollup-plugin-delete";
 
 export default [
     {
-        input: "src/ScreenReaderBridge.ts",
-        output: [
-            {
-                file: "dist/index.js",
-                name: "ScreenReaderBridge",
-                format: "iife"
-            }
-        ],
-        plugins: [typescript({ tsconfig: "./tsconfig.json" })]
-    },
-    {
-        input: "src/ScreenReaderBridge.ts",
+        input: "src/index.ts",
         output: [
             {
                 file: "dist/index.mjs",
-                format: "es"
+                format: "es",
+                sourcemap: true
+            }
+        ],
+        plugins: [
+            del({ targets: "dist/*", hook: "buildStart" }),
+            typescript({ tsconfig: "./tsconfig.json" })
+        ]
+    },
+    {
+        input: "src/index.ts",
+        output: [
+            {
+                file: "dist/index.cjs",
+                format: "cjs",
+                exports: "named",
+                sourcemap: true
             }
         ],
         plugins: [typescript({ tsconfig: "./tsconfig.json" })]
     },
     {
-        input: "dist/types/ScreenReaderBridge.d.ts",
+        input: "src/browser.ts",
+        output: [
+            {
+                file: "dist/index.global.js",
+                name: "ScreenReaderBridge",
+                format: "iife",
+                exports: "default",
+                sourcemap: true
+            }
+        ],
+        plugins: [typescript({ tsconfig: "./tsconfig.json" })]
+    },
+    {
+        input: "dist/types/index.d.ts",
         output: [
             {
                 file: "dist/index.d.ts",

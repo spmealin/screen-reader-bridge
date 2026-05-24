@@ -1,24 +1,39 @@
 {
     "name": "screen-reader-bridge",
     "version": "1.0.0",
-    "main": "dist/index.js",
-    "module": "dist/index.mjs",
-    "exports": {
-        "import": "./dist/index.mjs"
-    },
-    "types": "dist/index.d.ts",
     "description": "A simple interface for making a variety of screen reader and browser combinations speak using an ARIA live region.",
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "browser": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.mjs"
+        },
+        "./package.json": "./package.json"
+    },
     "files": [
-        "dist/*"
+        "dist"
     ],
+    "sideEffects": false,
+    "unpkg": "./dist/index.global.js",
+    "jsdelivr": "./dist/index.global.js",
     "keywords": [
         "a11y",
         "accessibility",
+        "aria",
+        "aria-live",
+        "live region",
         "screen reader"
     ],
+    "homepage": "https://github.com/spmealin/screen-reader-bridge#readme",
     "repository": {
         "type": "git",
-        "url": "https://github.com/spmealin/screen-reader-bridge.git"
+        "url": "git+https://github.com/spmealin/screen-reader-bridge.git"
     },
     "bugs": {
         "url": "https://github.com/spmealin/screen-reader-bridge/issues"
@@ -33,17 +48,19 @@
         "lint-check": "eslint --quiet src/ --ext .ts && prettier --config .prettierrc.json src/**/*.ts --check",
         "format": "prettier --config .prettierrc.json src/**/*.ts --write",
         "prepare": "husky install",
-        "test": "jest"
+        "prepack": "npm run build",
+        "test": "jest --runInBand && npm run test:types",
+        "test:types": "npm run build && tsc -p tsconfig.public-api-test.json"
     },
     "license": "MIT",
     "devDependencies": {
         "@rollup/plugin-typescript": "11.1.2",
-        "@types/jest": "^29.2.1",
+        "@types/jest": "^29.5.14",
         "@typescript-eslint/eslint-plugin": "5.60.1",
         "@typescript-eslint/parser": "5.62.0",
         "concurrently": "8.2.0",
-        "depcheck": "^1.4.3",
-        "eslint": "8.44.0",
+        "depcheck": "^1.4.7",
+        "eslint": "^8.57.1",
         "eslint-config-prettier": "8.8.0",
         "eslint-plugin-jsdoc": "46.4.3",
         "husky": "8.0.3",
@@ -52,14 +69,17 @@
         "lint-staged": "13.2.2",
         "prettier": "2.8.8",
         "rimraf": "5.0.1",
-        "rollup": "2.79.1",
-        "rollup-plugin-dts": "4.2.3",
+        "rollup": "^2.80.0",
         "rollup-plugin-delete": "2.0.0",
+        "rollup-plugin-dts": "4.2.3",
         "ts-jest": "28.0.8",
-        "tslib": "2.6.0",
+        "tslib": "^2.8.1",
         "typescript": "4.9.5"
     },
     "overrides": {
+        "minimatch@3.1.5": {
+            "brace-expansion": "1.1.14"
+        },
         "optionator": "^0.9.3",
         "semver": "^7.5.2"
     }
